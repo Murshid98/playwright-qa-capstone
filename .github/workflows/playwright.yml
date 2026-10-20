@@ -35,8 +35,13 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright tests (Chromium)
-        run: npx playwright test --project=chromium
+      - name: Run all tests except visual (Chromium)
+        run: npx playwright test --project=chromium --ignore=tests/visual
+        env:
+          CI: true
+
+      - name: Run visual regression tests (update snapshots for Linux CI environment)
+        run: npx playwright test tests/visual --project=chromium --update-snapshots
         env:
           CI: true
 
