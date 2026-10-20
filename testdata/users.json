@@ -1,0 +1,20 @@
+{
+  "validLoginNote": "These are placeholder credentials. The actual test creates a fresh account dynamically using faker.",
+  "contactForm": {
+    "name": "QA Automation Tester",
+    "email": "qa.tester@example.com",
+    "subject": "Automation Test Inquiry",
+    "message": "This is an automated test message sent by the QA Capstone Playwright framework to validate the contact form functionality."
+  },
+  "registrationDefaults": {
+    "day": "15",
+    "month": "6",
+    "year": "1995",
+    "address": "123 Automation Street",
+    "country": "United States",
+    "state": "California",
+    "city": "Los Angeles",
+    "zipcode": "90001",
+    "mobile": "5551234567"
+  }
+}

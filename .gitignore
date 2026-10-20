@@ -1,0 +1,28 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Auth state — contains session tokens
+/fixtures/storageState.json
+/playwright/.auth/
+
+# Reports and artifacts (generated on each run)
+/reports/html/
+/reports/junit/
+/reports/allure-results/
+/screenshots/failures/
+/screenshots/manual/
+
+# Compiled output
+/dist/
+
+# Environment secrets
+.env
+
+# OS
+.DS_Store
+Thumbs.db

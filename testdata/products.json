@@ -1,0 +1,31 @@
+{
+  "searchTerms": [
+    {
+      "term": "dress",
+      "expectResults": true,
+      "description": "Common product type — multiple results expected"
+    },
+    {
+      "term": "top",
+      "expectResults": true,
+      "description": "Common clothing item — multiple results expected"
+    },
+    {
+      "term": "jeans",
+      "expectResults": true,
+      "description": "Common product — some results expected"
+    },
+    {
+      "term": "xyz_no_such_product_99999",
+      "expectResults": false,
+      "description": "Non-existent product — no results expected"
+    }
+  ],
+  "paymentInfo": {
+    "cardName": "Test Automation User",
+    "cardNumber": "4111111111111111",
+    "cvc": "123",
+    "expiryMonth": "12",
+    "expiryYear": "2027"
+  }
+}
