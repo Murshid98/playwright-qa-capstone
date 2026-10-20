@@ -36,7 +36,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run all tests except visual (Chromium)
-        run: npx playwright test --project=chromium --ignore=tests/visual
+        run: npx playwright test --project=chromium --grep-invert "Visual Regression"
         env:
           CI: true
 
