@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+﻿import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class ContactPage extends BasePage {
@@ -27,13 +27,14 @@ export class ContactPage extends BasePage {
   }
 
   async submitContactForm() {
+    // Contact form stays on the same URL after submit; waitForLoadState handles the reload.
     this.page.once('dialog', dialog => dialog.accept());
-    await this.page.locator('input[data-qa="submit-button"]').click();
+    await this.page.locator('input[data-qa="submit-button"]').click({ noWaitAfter: true });
     await this.page.waitForLoadState('domcontentloaded');
   }
 
   async isSuccessMessageVisible(): Promise<boolean> {
-    await this.page.locator('.status.alert-success').waitFor({ state: 'visible', timeout: 10000 });
+    await this.page.locator('.status.alert-success').waitFor({ state: 'visible', timeout: 20000 });
     return true;
   }
 
@@ -42,7 +43,6 @@ export class ContactPage extends BasePage {
   }
 
   async clickHomeButton() {
-    await this.page.locator('a.btn:has-text("Home")').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a.btn:has-text("Home")'));
   }
 }

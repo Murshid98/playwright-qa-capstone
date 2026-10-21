@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+﻿import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export interface PaymentInfo {
@@ -32,11 +32,21 @@ export class CheckoutPage extends BasePage {
   }
 
   async placeOrder() {
-    await this.page.locator('a.btn.btn-default.check_out').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.dismissAdModal();
+    const btn = this.page.locator('a.btn.btn-default.check_out');
+    await btn.scrollIntoViewIfNeeded();
+    // force=true bypasses Cloudflare <ins> overlays; also retries if 524 reload sent us back to /checkout
+    await this.clickAndWaitForNav(btn, 180_000, true);
+    if (!this.page.url().includes('/payment')) {
+      await this.dismissAdModal();
+      await this.page.waitForTimeout(3000);
+      await this.clickAndWaitForNav(btn, 180_000, true);
+    }
   }
 
   async fillPaymentInfo(info: PaymentInfo) {
+    // Payment page can be slow to hydrate on the live site
+    await this.page.locator('input[data-qa="name-on-card"]').waitFor({ state: 'visible', timeout: 60000 });
     await this.page.locator('input[data-qa="name-on-card"]').fill(info.cardName);
     await this.page.locator('input[data-qa="card-number"]').fill(info.cardNumber);
     await this.page.locator('input[data-qa="cvc"]').fill(info.cvc);
@@ -45,14 +55,15 @@ export class CheckoutPage extends BasePage {
   }
 
   async confirmPayment() {
-    await this.page.locator('button[data-qa="pay-button"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    const payBtn = this.page.locator('button[data-qa="pay-button"]');
+    await payBtn.scrollIntoViewIfNeeded();
+    await this.clickAndWaitForNav(payBtn);
   }
 
   async isOrderPlacedVisible(): Promise<boolean> {
     await this.page.locator('h2.title.text-center:has-text("Order Placed!")').waitFor({
       state: 'visible',
-      timeout: 15000,
+      timeout: 30000,
     });
     return true;
   }
@@ -66,7 +77,6 @@ export class CheckoutPage extends BasePage {
   }
 
   async clickContinueAfterOrder() {
-    await this.page.locator('a[data-qa="continue-button"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a[data-qa="continue-button"]'));
   }
 }

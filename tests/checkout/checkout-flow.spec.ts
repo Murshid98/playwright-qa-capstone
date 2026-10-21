@@ -2,8 +2,9 @@ import { test, expect } from '../../fixtures';
 import { RandomData } from '../../utils/randomDataGenerator';
 import productsData from '../../testdata/products.json';
 
-test.describe('TC13: End-to-End Checkout Flow', () => {
-  test('TC13 - Register, add product, complete checkout, place order', async ({
+test.describe('TC07: End-to-End Checkout Flow', () => {
+  test.describe.configure({ timeout: 600_000 });
+  test('TC07 - Register, add product, complete checkout, place order', async ({
     page,
     loginPage,
     registerPage,
@@ -39,7 +40,6 @@ test.describe('TC13: End-to-End Checkout Flow', () => {
     await registerPage.clickContinue();
     expect(await homePage.isLoggedIn()).toBeTruthy();
 
-    // Stabilize before navigating — site can trigger redirects after registration
     await page.waitForTimeout(1500);
 
     // Step 2: Add product to cart
@@ -54,13 +54,13 @@ test.describe('TC13: End-to-End Checkout Flow', () => {
 
     // Step 4: Proceed to checkout
     await cartPage.proceedToCheckout();
-    await expect(page.locator('#address_delivery')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('#address_delivery')).toBeVisible({ timeout: 30000 });
 
     // Step 5: Add comment and place order
     await checkoutPage.addOrderComment('Automated test order — please disregard.');
     await checkoutPage.placeOrder();
 
-    // Step 6: Fill payment details (test card data)
+    // Step 6: Fill payment details (test card data from testdata/products.json)
     const payment = productsData.paymentInfo;
     await checkoutPage.fillPaymentInfo({
       cardName: payment.cardName,
@@ -75,10 +75,10 @@ test.describe('TC13: End-to-End Checkout Flow', () => {
     // Step 7: Verify order placed
     expect(await checkoutPage.isOrderPlacedVisible()).toBeTruthy();
 
-    // Step 8: Continue then delete account (cleanup)
+    // Step 8: Cleanup — delete test account
     await checkoutPage.clickContinueAfterOrder();
     await homePage.clickNavDeleteAccount();
-    await expect(page.locator('h2[data-qa="account-deleted"]')).toBeVisible({ timeout: 10000 });
-    await page.locator('a[data-qa="continue-button"]').click();
+    await expect(page.locator('h2:has-text("Account Deleted!")')).toBeVisible({ timeout: 60000 });
+    await registerPage.clickContinue();
   });
 });

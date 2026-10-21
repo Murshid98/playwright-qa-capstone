@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+﻿import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class CartPage extends BasePage {
@@ -58,13 +58,13 @@ export class CartPage extends BasePage {
   }
 
   async proceedToCheckout() {
-    await this.page.locator('a.btn.btn-default.check_out').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    const btn = this.page.locator('a.btn.btn-default.check_out');
+    await btn.scrollIntoViewIfNeeded();
+    await this.clickAndWaitForNav(btn, 180_000, true);
   }
 
   async clickRegisterLoginInModal() {
-    await this.page.locator('#checkoutModal a:has-text("Register / Login")').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('#checkoutModal a:has-text("Register / Login")'));
   }
 
   async isCheckoutModalVisible(): Promise<boolean> {

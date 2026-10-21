@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+﻿import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class LoginPage extends BasePage {
@@ -13,15 +13,13 @@ export class LoginPage extends BasePage {
   async login(email: string, password: string) {
     await this.page.locator('input[data-qa="login-email"]').fill(email);
     await this.page.locator('input[data-qa="login-password"]').fill(password);
-    await this.page.locator('button[data-qa="login-button"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('button[data-qa="login-button"]'));
   }
 
   async signupNewUser(name: string, email: string) {
     await this.page.locator('input[data-qa="signup-name"]').fill(name);
     await this.page.locator('input[data-qa="signup-email"]').fill(email);
-    await this.page.locator('button[data-qa="signup-button"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('button[data-qa="signup-button"]'));
   }
 
   async getLoginErrorMessage(): Promise<string> {

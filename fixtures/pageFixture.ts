@@ -17,7 +17,25 @@ type PageObjects = {
   contactPage: ContactPage;
 };
 
+// Block third-party ad networks that inject full-page overlays (e.g. iFOREX modal via DoubleClick).
+const AD_BLOCK_PATTERNS = [
+  '**/*doubleclick.net/**',
+  '**/*googlesyndication.com/**',
+  '**/*googleadservices.com/**',
+  '**/*adservice.google.*/**',
+  '**/*adnxs.com/**',
+  '**/*taboola.com/**',
+  '**/*outbrain.com/**',
+];
+
 export const test = base.extend<PageObjects>({
+  page: async ({ page }, use) => {
+    // Abort ad-network requests before each test so ad modals cannot appear
+    await Promise.all(
+      AD_BLOCK_PATTERNS.map(pattern => page.route(pattern, route => route.abort().catch(() => {})))
+    );
+    await use(page);
+  },
   homePage: async ({ page }, use) => {
     await use(new HomePage(page));
   },

@@ -44,7 +44,7 @@ export async function registerNewUser(page: Page, overrides: Partial<AccountInfo
   });
   await registerPage.clickContinue();
   // Wait for home page with logged-in indicator before returning
-  await page.locator('li a:has-text("Logged in as")').waitFor({ state: 'visible', timeout: 20000 });
+  await page.locator('li a:has-text("Logged in as")').waitFor({ state: 'visible', timeout: 45000 });
 
   return user;
 }
@@ -59,7 +59,17 @@ export async function deleteAccount(page: Page) {
   const homePage = new HomePage(page);
   await homePage.clickNavDeleteAccount();
   const registerPage = new RegisterPage(page);
-  // Wait for account deleted confirmation
-  await page.locator('h2[data-qa="account-deleted"]').waitFor({ state: 'visible', timeout: 10000 });
+  try {
+    await page.locator('h2:has-text("Account Deleted!")').waitFor({ state: 'visible', timeout: 60000 });
+  } catch {
+    // Transient server error (e.g. Cloudflare 524) — retry navigating to delete endpoint
+    await page.waitForTimeout(5000);
+    try {
+      await page.goto('/delete_account', { waitUntil: 'domcontentloaded' });
+    } catch {
+      // Ignore navigation error; check for confirmation below
+    }
+    await page.locator('h2:has-text("Account Deleted!")').waitFor({ state: 'visible', timeout: 60000 });
+  }
   await registerPage.clickContinue();
 }

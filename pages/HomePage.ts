@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+﻿import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class HomePage extends BasePage {
@@ -11,37 +11,45 @@ export class HomePage extends BasePage {
   }
 
   async clickNavProducts() {
-    await this.page.locator('a[href="/products"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a[href="/products"]'));
   }
 
   async clickNavCart() {
-    await this.page.locator('a[href="/view_cart"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a[href="/view_cart"]'));
   }
 
   async clickNavLoginSignup() {
-    await this.page.locator('a[href="/login"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a[href="/login"]'));
   }
 
   async clickNavContactUs() {
-    await this.page.locator('a[href="/contact_us"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a[href="/contact_us"]'));
   }
 
   async clickNavLogout() {
-    await this.page.locator('a[href="/logout"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    // logout redirects back to / (same URL); waitForNavigation handles same-URL reloads
+    const navPromise = this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 180_000 });
+    await this.page.locator('a[href="/logout"]').click({ noWaitAfter: true });
+    await navPromise;
+    // Recover if logout redirected to a Cloudflare error page instead of home
+    const isCfError = await this.page.locator('h1:has-text("timeout occurred")').isVisible({ timeout: 500 }).catch(() => false);
+    if (isCfError) {
+      await this.page.waitForTimeout(5000);
+      await this.navigate('/');
+    }
   }
 
   async clickNavDeleteAccount() {
-    await this.page.locator('a[href="/delete_account"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a[href="/delete_account"]'));
   }
 
   async isLoggedIn(): Promise<boolean> {
-    return this.page.locator('li a:has-text("Logged in as")').isVisible();
+    try {
+      await this.page.locator('li a:has-text("Logged in as")').waitFor({ state: 'visible', timeout: 30000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async getLoggedInUsername(): Promise<string> {

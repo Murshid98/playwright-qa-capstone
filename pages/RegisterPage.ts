@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+﻿import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export interface AccountInfo {
@@ -63,21 +63,20 @@ export class RegisterPage extends BasePage {
     await this.page.locator('input[data-qa="zipcode"]').fill(data.zipcode);
     await this.page.locator('input[data-qa="mobile_number"]').fill(data.mobile);
 
-    // Submit
-    await this.page.locator('button[data-qa="create-account"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    // Submit and wait for navigation to account-created page
+    await this.clickAndWaitForNav(this.page.locator('button[data-qa="create-account"]'));
   }
 
   async isAccountCreatedVisible(): Promise<boolean> {
-    return this.page.locator('h2[data-qa="account-created"]').isVisible();
+    await this.page.locator('h2[data-qa="account-created"]').waitFor({ state: 'visible', timeout: 30000 });
+    return true;
   }
 
   async clickContinue() {
-    await this.page.locator('a[data-qa="continue-button"]').click();
-    await this.page.waitForLoadState('domcontentloaded');
+    await this.clickAndWaitForNav(this.page.locator('a[data-qa="continue-button"]'));
   }
 
   async isAccountDeletedVisible(): Promise<boolean> {
-    return this.page.locator('h2[data-qa="account-deleted"]').isVisible();
+    return this.page.locator('h2:has-text("Account Deleted!")').isVisible();
   }
 }

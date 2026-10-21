@@ -1,0 +1,920 @@
+<title>QA Capstone — Playwright Test Suite</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --bg:       #f8f9fb;
+  --surface:  #ffffff;
+  --border:   #e2e6ed;
+  --fg:       #1a202c;
+  --muted:    #6b7280;
+  --accent:   #1a7f5a;
+  --accent2:  #2d9d72;
+  --pass:     #15803d;
+  --pass-bg:  #dcfce7;
+  --fail:     #b91c1c;
+  --fail-bg:  #fee2e2;
+  --warn:     #92400e;
+  --warn-bg:  #fef3c7;
+  --code-bg:  #1e2535;
+  --code-fg:  #e2e8f0;
+  --navy:     #0f172a;
+  --shadow:   0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:       #0f172a;
+    --surface:  #1e293b;
+    --border:   #334155;
+    --fg:       #e2e8f0;
+    --muted:    #94a3b8;
+    --accent:   #34d399;
+    --accent2:  #6ee7b7;
+    --pass:     #4ade80;
+    --pass-bg:  #052e16;
+    --fail:     #f87171;
+    --fail-bg:  #450a0a;
+    --warn:     #fbbf24;
+    --warn-bg:  #451a03;
+    --code-bg:  #0d1117;
+    --code-fg:  #e2e8f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0f172a;--surface:#1e293b;--border:#334155;--fg:#e2e8f0;--muted:#94a3b8;
+  --accent:#34d399;--accent2:#6ee7b7;--pass:#4ade80;--pass-bg:#052e16;
+  --fail:#f87171;--fail-bg:#450a0a;--warn:#fbbf24;--warn-bg:#451a03;
+  --code-bg:#0d1117;--code-fg:#e2e8f0;color-scheme:dark;
+}
+
+/* ── Reset & base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--fg);
+  background: var(--bg);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.site-header {
+  background: var(--navy);
+  color: #fff;
+  padding: 28px max(24px, env(safe-area-inset-left, 0px));
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.header-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.header-title { font-size: 22px; font-weight: 700; }
+.header-sub { font-size: 13px; color: #94a3b8; margin-top: 2px; }
+.header-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+.theme-btn {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.theme-btn:hover { background: rgba(255,255,255,.2); }
+
+/* ── Tabs ──────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 max(24px, env(safe-area-inset-left, 0px));
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab {
+  background: none;
+  border: none;
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover { color: var(--fg); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Content wrapper ───────────────────────────────────────── */
+.content { max-width: 900px; margin: 0 auto; padding: 32px 0 64px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Cards & sections ──────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+h2 { font-size: 20px; font-weight: 700; margin-bottom: 12px; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+p { margin-bottom: 12px; color: var(--fg); }
+p:last-child { margin-bottom: 0; }
+
+/* ── Stats row ─────────────────────────────────────────────── */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.stat-num { font-size: 28px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+/* ── Test cases table ──────────────────────────────────────── */
+.tc-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tc-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--border);
+}
+.tc-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tc-table tr:last-child td { border-bottom: none; }
+.tc-table tr:hover td { background: var(--bg); }
+.tc-id { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+.tc-name { font-weight: 600; }
+.tc-desc { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+.badge-pass  { background: var(--pass-bg);  color: var(--pass); }
+.badge-warn  { background: var(--warn-bg);  color: var(--warn); }
+.badge-smoke { background: #ede9fe; color: #5b21b6; }
+.badge-e2e   { background: #dbeafe; color: #1e40af; }
+.badge-acc   { background: #fce7f3; color: #9d174d; }
+.badge-vis   { background: #fef3c7; color: #92400e; }
+.badge-net   { background: #e0f2fe; color: #075985; }
+
+/* ── Code blocks ───────────────────────────────────────────── */
+.code-block {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border-radius: 10px;
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  position: relative;
+}
+.code-block .comment { color: #6b7280; }
+.code-block .cmd { color: #86efac; }
+.code-block .flag { color: #93c5fd; }
+.code-block .string { color: #fde68a; }
+.copy-btn {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  color: var(--code-fg);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.copy-btn:hover { background: rgba(255,255,255,.2); }
+
+/* ── Step list ─────────────────────────────────────────────── */
+.steps { counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
+.step {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.step::before {
+  counter-increment: step;
+  content: counter(step);
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.step-body h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.step-body p { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* ── Q&A ───────────────────────────────────────────────────── */
+.qa-item { margin-bottom: 16px; }
+.qa-q {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  user-select: none;
+}
+.qa-q:hover { border-color: var(--accent); }
+.qa-q .arrow { color: var(--muted); transition: transform .2s; flex-shrink: 0; }
+.qa-q.open .arrow { transform: rotate(180deg); }
+.qa-a {
+  display: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 16px 18px;
+  font-size: 14px;
+  color: var(--fg);
+  line-height: 1.65;
+}
+.qa-a.open { display: block; }
+.qa-a ul { padding-left: 20px; margin-top: 8px; }
+.qa-a li { margin-bottom: 6px; }
+
+/* ── Tech stack grid ───────────────────────────────────────── */
+.tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.tech-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tech-name { font-weight: 700; font-size: 14px; }
+.tech-ver  { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.tech-role { font-size: 13px; color: var(--muted); }
+
+/* ── Architecture ──────────────────────────────────────────── */
+.arch-layers { display: flex; flex-direction: column; gap: 10px; }
+.arch-layer {
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  background: var(--surface);
+  border-radius: 0 8px 8px 0;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+.arch-layer h4 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+.arch-layer p  { font-size: 13px; color: var(--muted); margin-top: 4px; margin-bottom: 0; }
+
+/* ── File tree ─────────────────────────────────────────────── */
+.filetree {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border-radius: 10px;
+  padding: 18px 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.9;
+  overflow-x: auto;
+}
+.ft-dir  { color: #93c5fd; }
+.ft-file { color: #e2e8f0; }
+.ft-note { color: #6b7280; }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .site-header { padding: 20px 16px; }
+  .tab { padding: 12px 12px; font-size: 12px; }
+  .stat-num { font-size: 22px; }
+  .tc-table td, .tc-table th { padding: 9px 10px; }
+  h2 { font-size: 17px; }
+}
+</style>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="header-badge">Capstone</span>
+      <span class="header-title">Playwright QA Test Suite</span>
+    </div>
+    <div class="header-sub">automationexercise.com · 11 test cases · Chromium · Firefox · WebKit</div>
+  </div>
+  <div class="header-right">
+    <button class="theme-btn" onclick="toggleTheme()">Toggle theme</button>
+  </div>
+</header>
+
+<!-- TAB BAR -->
+<nav class="tab-bar" role="tablist">
+  <button class="tab active" onclick="switchTab('overview', this)">Overview</button>
+  <button class="tab" onclick="switchTab('testcases', this)">Test Cases</button>
+  <button class="tab" onclick="switchTab('howtorun', this)">How to Run</button>
+  <button class="tab" onclick="switchTab('architecture', this)">Architecture</button>
+  <button class="tab" onclick="switchTab('cicd', this)">CI / CD</button>
+  <button class="tab" onclick="switchTab('qa', this)">Q &amp; A Prep</button>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- ── OVERVIEW ── -->
+  <section id="panel-overview" class="panel active">
+    <div class="stats">
+      <div class="stat"><div class="stat-num">11</div><div class="stat-label">Test Cases</div></div>
+      <div class="stat"><div class="stat-num">3</div><div class="stat-label">Browsers</div></div>
+      <div class="stat"><div class="stat-num">7</div><div class="stat-label">Page Objects</div></div>
+      <div class="stat"><div class="stat-num">6</div><div class="stat-label">Test Types</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Project Summary</div>
+      <h2>End-to-End QA Automation for automationexercise.com</h2>
+      <p>A production-grade test automation framework built with Playwright and TypeScript, covering the full user journey on the live e-commerce site <strong>automationexercise.com</strong> — from registration and login through checkout, cart management, product search, accessibility auditing, visual regression, and network mocking.</p>
+      <p>All 11 test cases run on <strong>Chromium, Firefox, and WebKit</strong> browsers using a shared Page Object Model, custom fixtures, and a GitHub Actions CI/CD pipeline.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Technology Stack</div>
+      <div class="tech-grid">
+        <div class="tech-item">
+          <div class="tech-name">Playwright</div>
+          <div class="tech-ver">v1.64.1</div>
+          <div class="tech-role">Browser automation framework</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">TypeScript</div>
+          <div class="tech-ver">CommonJS target</div>
+          <div class="tech-role">Type-safe test authoring</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">axe-core</div>
+          <div class="tech-ver">@axe-core/playwright</div>
+          <div class="tech-role">WCAG 2.1 AA accessibility scans</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">GitHub Actions</div>
+          <div class="tech-ver">workflow_dispatch</div>
+          <div class="tech-role">CI/CD pipeline with artifacts</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">HTML Reporter</div>
+          <div class="tech-ver">+ JUnit XML</div>
+          <div class="tech-role">Test result reporting</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Visual Regression</div>
+          <div class="tech-ver">toHaveScreenshot()</div>
+          <div class="tech-role">Pixel-diff snapshot testing</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Test Coverage</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span class="badge badge-smoke">User Auth (TC01–TC03)</span>
+        <span class="badge badge-e2e">E2E Checkout (TC07)</span>
+        <span class="badge badge-smoke">Cart Management (TC05–TC06)</span>
+        <span class="badge badge-smoke">Product Search (TC04)</span>
+        <span class="badge badge-acc">Accessibility WCAG 2.1 (TC09)</span>
+        <span class="badge badge-vis">Visual Regression (TC10)</span>
+        <span class="badge badge-net">Network Mock (TC11)</span>
+        <span class="badge badge-e2e">Contact Us (TC08)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TEST CASES ── -->
+  <section id="panel-testcases" class="panel">
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="tc-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Test Name</th>
+              <th>Type</th>
+              <th>File</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tc-id">TC01</span></td>
+              <td>
+                <div class="tc-name">User Registration</div>
+                <div class="tc-desc">Registers a new account with valid data, verifies "Account Created!" confirmation, then deletes the account.</div>
+              </td>
+              <td><span class="badge badge-smoke">Auth</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">auth/register.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC02</span></td>
+              <td>
+                <div class="tc-name">Login with Valid Credentials</div>
+                <div class="tc-desc">Logs in with a pre-registered account, verifies "Logged in as [name]" appears in the nav, then logs out.</div>
+              </td>
+              <td><span class="badge badge-smoke">Auth</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">auth/login.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC03</span></td>
+              <td>
+                <div class="tc-name">Logout Clears Session</div>
+                <div class="tc-desc">Logs in, logs out, and verifies the "Signup / Login" nav link is visible (session cleared, user is unauthenticated).</div>
+              </td>
+              <td><span class="badge badge-smoke">Auth</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">auth/login.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC04</span></td>
+              <td>
+                <div class="tc-name">Product Search</div>
+                <div class="tc-desc">Searches for "Blue Top", verifies the "Searched Products" heading and at least one matching result appears.</div>
+              </td>
+              <td><span class="badge badge-smoke">Products</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">products/product-search.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC05</span></td>
+              <td>
+                <div class="tc-name">Add Product to Cart</div>
+                <div class="tc-desc">Adds the first product from the listing page to the cart, navigates to /view_cart, and verifies at least 1 item is present.</div>
+              </td>
+              <td><span class="badge badge-smoke">Cart</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">cart/cart-management.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC06</span></td>
+              <td>
+                <div class="tc-name">Remove Product from Cart</div>
+                <div class="tc-desc">Adds a product to the cart, then removes it and verifies the cart item count decreases by 1 (and shows empty-cart state if count reaches 0).</div>
+              </td>
+              <td><span class="badge badge-smoke">Cart</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">cart/cart-management.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC07</span></td>
+              <td>
+                <div class="tc-name">End-to-End Checkout Flow</div>
+                <div class="tc-desc">Full user journey: register → add product → cart → checkout → fill delivery & payment details → place order → verify "Order Placed!" → delete account.</div>
+              </td>
+              <td><span class="badge badge-e2e">E2E</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">checkout/checkout-flow.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC08</span></td>
+              <td>
+                <div class="tc-name">Contact Us Form Submission</div>
+                <div class="tc-desc">Navigates to /contact_us, fills in name, email, subject, and message, submits the form, and verifies the success message appears.</div>
+              </td>
+              <td><span class="badge badge-smoke">Forms</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">contact-us/contact-us.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC09</span></td>
+              <td>
+                <div class="tc-name">WCAG 2.1 Accessibility Scan</div>
+                <div class="tc-desc">Runs axe-core on the home page, asserts zero critical violations, and logs the full report (serious/moderate violations are reported but do not fail the test).</div>
+              </td>
+              <td><span class="badge badge-acc">Accessibility</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">accessibility/a11y.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC10</span></td>
+              <td>
+                <div class="tc-name">Visual Regression — Home Page</div>
+                <div class="tc-desc">Captures a full-page screenshot of the home page and compares it pixel-by-pixel against a stored baseline snapshot (per-OS, per-browser).</div>
+              </td>
+              <td><span class="badge badge-vis">Visual</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">visual/visual-regression.spec.ts</td>
+            </tr>
+            <tr>
+              <td><span class="tc-id">TC11</span></td>
+              <td>
+                <div class="tc-name">Network Mock — API Intercept</div>
+                <div class="tc-desc">Uses page.route() to intercept the products API, injects a mocked response, and verifies that a mock product name appears in the UI.</div>
+              </td>
+              <td><span class="badge badge-net">Network</span></td>
+              <td style="font-size:12px;font-family:monospace;color:var(--muted)">network/network-mock.spec.ts</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW TO RUN ── -->
+  <section id="panel-howtorun" class="panel">
+    <div class="card">
+      <div class="card-title">Prerequisites</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-body">
+            <h4>Install Node.js (LTS)</h4>
+            <p>Download from nodejs.org — version 18 or later required.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-body">
+            <h4>Install dependencies</h4>
+            <p>Run <code style="background:var(--bg);padding:1px 6px;border-radius:4px;">npm install</code> in the project root to install Playwright and all packages.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-body">
+            <h4>Install browser binaries</h4>
+            <p>Run <code style="background:var(--bg);padding:1px 6px;border-radius:4px;">npx playwright install</code> to download Chromium, Firefox, and WebKit.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Common Run Commands</div>
+
+      <h3 style="margin-bottom:8px;font-size:14px;color:var(--muted)">Run all tests (headless, all 3 browsers)</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="cmd">npx playwright test</span>
+      </div>
+
+      <h3 style="margin-bottom:8px;font-size:14px;color:var(--muted)">Run on a specific browser (headed/visible)</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="comment"># Chromium (Chrome)</span>
+<span class="cmd">npx playwright test</span> <span class="flag">--project=chromium --headed</span>
+
+<span class="comment"># Firefox</span>
+<span class="cmd">npx playwright test</span> <span class="flag">--project=firefox --headed</span>
+
+<span class="comment"># WebKit (Safari)</span>
+<span class="cmd">npx playwright test</span> <span class="flag">--project=webkit --headed</span>
+      </div>
+
+      <h3 style="margin-bottom:8px;font-size:14px;color:var(--muted)">Run a single test case</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="comment"># Example: run only TC09 accessibility test</span>
+<span class="cmd">npx playwright test</span> <span class="flag">tests/accessibility/a11y.spec.ts --project=chromium --headed</span>
+
+<span class="comment"># Example: run only TC07 checkout flow</span>
+<span class="cmd">npx playwright test</span> <span class="flag">tests/checkout/checkout-flow.spec.ts --project=chromium --headed</span>
+      </div>
+
+      <h3 style="margin-bottom:8px;font-size:14px;color:var(--muted)">Visual regression — first-time setup (create baseline)</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="comment"># Run ONCE per browser to create the baseline snapshot</span>
+<span class="cmd">npx playwright test</span> <span class="flag">tests/visual --project=chromium --update-snapshots</span>
+<span class="cmd">npx playwright test</span> <span class="flag">tests/visual --project=firefox --update-snapshots</span>
+<span class="cmd">npx playwright test</span> <span class="flag">tests/visual --project=webkit --update-snapshots</span>
+      </div>
+
+      <h3 style="margin-bottom:8px;font-size:14px;color:var(--muted)">View the HTML report</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="cmd">npx playwright show-report reports/html</span>
+      </div>
+
+      <h3 style="margin-bottom:8px;font-size:14px;color:var(--muted)">Quick sanity check (fastest test — 30 seconds)</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="cmd">npx playwright test</span> <span class="flag">tests/accessibility/a11y.spec.ts --project=chromium --headed</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Notes for Live Site Testing</div>
+      <p>The test target <strong>automationexercise.com</strong> is a live site running behind Cloudflare. It can be intermittently slow. The framework handles this with:</p>
+      <ul style="padding-left:20px;color:var(--muted);font-size:14px;line-height:1.8;">
+        <li>Navigation timeout: <strong>180 seconds</strong> per page load</li>
+        <li>Each test timeout: <strong>300 seconds</strong> (600s for registration/checkout)</li>
+        <li>Automatic retry: <strong>1 retry</strong> on failure (2 in CI)</li>
+        <li>Cloudflare 524 detection and page-reload recovery</li>
+        <li>Force-click to bypass ad-overlay interception</li>
+      </ul>
+      <p style="margin-top:12px;font-size:13px;color:var(--muted);">If tests fail due to site outages, wait a few minutes and re-run. Tests are designed to be retried safely.</p>
+    </div>
+  </section>
+
+  <!-- ── ARCHITECTURE ── -->
+  <section id="panel-architecture" class="panel">
+    <div class="card">
+      <div class="card-title">Design Pattern</div>
+      <div class="arch-layers">
+        <div class="arch-layer">
+          <h4>Test Specs (TC01–TC11)</h4>
+          <p>11 test files in <code>tests/</code>. Each imports page objects and custom fixtures — no direct Playwright API calls; all interactions go through page objects.</p>
+        </div>
+        <div class="arch-layer">
+          <h4>Custom Fixtures</h4>
+          <p><code>fixtures/pageFixture.ts</code> extends Playwright's built-in fixtures using <code>base.extend&lt;T&gt;()</code>. Instantiates all page objects (loginPage, homePage, productsPage, cartPage, …) per test, injecting the shared <code>page</code>.</p>
+        </div>
+        <div class="arch-layer">
+          <h4>Page Object Model (POM)</h4>
+          <p>7 page classes in <code>pages/</code>. All extend <code>BasePage</code> which provides <code>navigate()</code>, <code>clickAndWaitForNav()</code>, and Cloudflare recovery logic. No test assertions live inside page objects.</p>
+        </div>
+        <div class="arch-layer">
+          <h4>Utilities</h4>
+          <p><code>utils/randomDataGenerator.ts</code> — generates unique emails, names and passwords for each test run. <code>utils/authHelper.ts</code> — shared <code>registerNewUser()</code> and <code>deleteAccount()</code> helpers used by multiple test suites.</p>
+        </div>
+        <div class="arch-layer">
+          <h4>Test Data</h4>
+          <p><code>testdata/products.json</code> — static test data (payment card details, product info). Keeps data separate from test logic.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Project Structure</div>
+      <div class="filetree">
+<span class="ft-dir">qa_capstone/</span>
+├── <span class="ft-dir">tests/</span>
+│   ├── <span class="ft-dir">accessibility/</span>   <span class="ft-note">TC09 — axe-core WCAG 2.1 scan</span>
+│   ├── <span class="ft-dir">auth/</span>            <span class="ft-note">TC01 register, TC02-03 login/logout</span>
+│   ├── <span class="ft-dir">cart/</span>            <span class="ft-note">TC05 add, TC06 remove</span>
+│   ├── <span class="ft-dir">checkout/</span>        <span class="ft-note">TC07 end-to-end checkout</span>
+│   ├── <span class="ft-dir">contact-us/</span>      <span class="ft-note">TC08 contact form</span>
+│   ├── <span class="ft-dir">network/</span>         <span class="ft-note">TC11 API mock with page.route()</span>
+│   ├── <span class="ft-dir">products/</span>        <span class="ft-note">TC04 product search</span>
+│   └── <span class="ft-dir">visual/</span>          <span class="ft-note">TC10 screenshot regression</span>
+├── <span class="ft-dir">pages/</span>              <span class="ft-note">Page Object Model classes</span>
+│   ├── <span class="ft-file">BasePage.ts</span>      <span class="ft-note">navigate(), clickAndWaitForNav()</span>
+│   ├── <span class="ft-file">HomePage.ts</span>
+│   ├── <span class="ft-file">LoginPage.ts</span>
+│   ├── <span class="ft-file">RegisterPage.ts</span>
+│   ├── <span class="ft-file">ProductsPage.ts</span>
+│   ├── <span class="ft-file">CartPage.ts</span>
+│   └── <span class="ft-file">CheckoutPage.ts</span>
+├── <span class="ft-dir">fixtures/</span>
+│   └── <span class="ft-file">pageFixture.ts</span>   <span class="ft-note">Custom Playwright fixture factory</span>
+├── <span class="ft-dir">utils/</span>
+│   ├── <span class="ft-file">randomDataGenerator.ts</span>
+│   └── <span class="ft-file">authHelper.ts</span>
+├── <span class="ft-dir">testdata/</span>
+│   └── <span class="ft-file">products.json</span>
+├── <span class="ft-dir">.github/workflows/</span>
+│   └── <span class="ft-file">playwright.yml</span>   <span class="ft-note">CI/CD pipeline</span>
+└── <span class="ft-file">playwright.config.ts</span>  <span class="ft-note">3 projects, retries, reporters</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Key Technical Decisions</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">force:true on all navigation clicks</h4>
+          <p style="font-size:13px;color:var(--muted);margin:0;">automationexercise.com injects Cloudflare <code>&lt;ins&gt;</code> ad elements that intercept clicks. All <code>clickAndWaitForNav()</code> calls use <code>force:true</code> to dispatch the click event directly on the target element, bypassing overlay detection.</p>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Listing-page approach for "Add to Cart"</h4>
+          <p style="font-size:13px;color:var(--muted);margin:0;">Instead of navigating to the product detail page to click the cart button (risking a 2nd Cloudflare timeout), we click <code>.productinfo .add-to-cart</code> directly from the products listing. Saves one navigation and reduces flakiness.</p>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Cloudflare 524 detection & recovery</h4>
+          <p style="font-size:13px;color:var(--muted);margin:0;">524 errors are served as valid HTTP (no exception thrown). <code>BasePage.navigate()</code> checks for <code>h1:has-text("timeout occurred")</code> with a 500ms timeout immediately after every navigation and retries if found.</p>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:14px;">
+          <h4 style="font-size:13px;font-weight:700;margin-bottom:4px;">Race-condition-free navigation</h4>
+          <p style="font-size:13px;color:var(--muted);margin:0;"><code>clickAndWaitForNav()</code> starts the <code>waitForURL</code> listener <em>before</em> firing the click (in a <code>Promise.all</code>), so fast navigations that complete before a sequential listener registers are never missed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CI/CD ── -->
+  <section id="panel-cicd" class="panel">
+    <div class="card">
+      <div class="card-title">GitHub Actions Workflow</div>
+      <p>The workflow file is at <code>.github/workflows/playwright.yml</code>. It runs automatically on push/pull-request to <code>main</code> or <code>master</code>, and can also be triggered manually from the Actions tab.</p>
+
+      <h3 style="margin-top:20px;margin-bottom:8px;">Trigger via GitHub UI</h3>
+      <div class="steps">
+        <div class="step"><div class="step-body"><h4>Go to your repository on GitHub</h4><p>Navigate to the Actions tab at the top of the repo page.</p></div></div>
+        <div class="step"><div class="step-body"><h4>Select "Playwright QA Capstone Tests"</h4><p>Click the workflow name in the left sidebar.</p></div></div>
+        <div class="step"><div class="step-body"><h4>Click "Run workflow"</h4><p>Choose the browser (chromium, firefox, webkit, or all) from the dropdown and click the green button.</p></div></div>
+        <div class="step"><div class="step-body"><h4>Download the HTML report</h4><p>After the run completes, scroll to the bottom of the workflow run page and download "playwright-html-report" from the Artifacts section.</p></div></div>
+      </div>
+
+      <h3 style="margin-top:20px;margin-bottom:8px;">What the workflow does</h3>
+      <div class="code-block">
+        <span class="comment"># 1. Checkout code on ubuntu-latest</span>
+<span class="comment"># 2. Setup Node.js LTS + npm cache</span>
+<span class="comment"># 3. npm ci (install exact versions)</span>
+<span class="comment"># 4. Install Chromium browser with OS deps</span>
+<span class="comment"># 5. Run all tests EXCEPT visual (retries=2 in CI)</span>
+<span class="cmd">npx playwright test --project=chromium --grep-invert "Visual Regression"</span>
+<span class="comment"># 6. Update visual snapshots for Linux CI environment</span>
+<span class="cmd">npx playwright test tests/visual --project=chromium --update-snapshots</span>
+<span class="comment"># 7. Upload HTML report (30 days) + JUnit XML + traces on failure</span>
+      </div>
+
+      <p style="font-size:13px;color:var(--muted);">Visual regression runs with <code>--update-snapshots</code> in CI because baseline snapshots are OS-specific (Linux CI vs Windows local). The CI always regenerates the baseline, so visual tests never fail in CI due to environment differences.</p>
+    </div>
+  </section>
+
+  <!-- ── Q&A PREP ── -->
+  <section id="panel-qa" class="panel">
+    <div class="card">
+      <div class="card-title">Presentation Q &amp; A Preparation</div>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:20px;">Tap each question to see a model answer.</p>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          Why did you choose Playwright over Selenium or Cypress?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          Playwright was chosen for three reasons: (1) it supports all three major browsers — Chromium, Firefox, and WebKit — with a single API and a single install, which Cypress doesn't offer natively; (2) it has first-class TypeScript support and auto-waits built in, reducing the need for explicit waits; (3) <code>page.route()</code> for network mocking and <code>toHaveScreenshot()</code> for visual regression are built-in, whereas Selenium requires additional libraries for both.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          What is the Page Object Model and why did you use it?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          The Page Object Model (POM) is a design pattern where each page of the application is represented as a class. The class encapsulates all selectors and actions for that page. Tests call methods on page objects instead of writing raw Playwright API calls. This means: (1) if a selector changes, you fix it in one place; (2) tests read like business scenarios ("loginPage.login(email, password)") rather than implementation details; (3) code reuse — the same <code>registerNewUser()</code> helper is shared across TC01, TC02-03 beforeAll, and TC07.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          What are Playwright fixtures and how did you use them?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          Playwright fixtures are dependency-injection containers. The built-in <code>page</code> fixture provides a browser page per test. We extended this with <code>base.extend&lt;T&gt;()</code> in <code>fixtures/pageFixture.ts</code> to add all our page objects (loginPage, homePage, productsPage, etc.) as additional fixtures. Every test that uses <code>{ loginPage, cartPage }</code> in its parameter list automatically gets fresh, fully initialized page objects without any setup boilerplate in the test itself.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          How does the accessibility test work?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          TC09 uses the <code>@axe-core/playwright</code> library to run an automated WCAG 2.1 AA accessibility audit. After navigating to the home page, it calls <code>new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()</code>. The result includes a list of violations categorized by severity (critical, serious, moderate, minor). The test asserts that there are <strong>zero critical violations</strong>. Serious and moderate violations are logged to the console for visibility but do not fail the test — this matches real-world QA practice where some existing site issues are acknowledged but don't block CI.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          How does visual regression testing work?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          TC10 uses Playwright's built-in <code>expect(page).toHaveScreenshot('home-page.png')</code>. On the first run you pass <code>--update-snapshots</code> to create the baseline image, which is stored in a <code>*.spec.ts-snapshots/</code> folder and committed to the repository. On subsequent runs, Playwright captures a new screenshot and compares it pixel-by-pixel against the baseline. If they differ beyond a threshold, the test fails and saves a diff image. Snapshots are stored per-OS and per-browser (e.g., <code>home-page-chromium-win32.png</code>) because rendering differs between platforms.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          How does network mocking work in TC11?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          TC11 uses <code>page.route()</code> to intercept HTTP requests matching a URL pattern. Before navigating to the products page, we register a route handler that matches the products API endpoint. When the browser makes that request, Playwright intercepts it and fulfills it with a custom JSON response containing a mock product name (e.g., "Mock Test Product"). We then verify that the mock name appears in the rendered page. This tests that the frontend correctly renders API data without depending on the live API, making the test fast and deterministic.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          How did you handle test data management?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          Two strategies were used: (1) <strong>Dynamic data</strong> — for user accounts, each test run generates a unique email address using <code>RandomData.email()</code> (timestamp + random suffix). This prevents test pollution between runs and allows parallel execution without conflicts. (2) <strong>Static data</strong> — payment card details and product info are stored in <code>testdata/products.json</code> and imported into tests. Account cleanup is handled in <code>afterAll</code> hooks using a <code>deleteAccount()</code> helper, so test accounts don't accumulate on the live site.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          How did you handle flakiness on a live site?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          The site <code>automationexercise.com</code> runs behind Cloudflare and can return HTTP 524 timeout errors as valid HTML pages. We built several resilience layers:
+          <ul>
+            <li><strong>524 detection:</strong> After every navigation, check for <code>h1:has-text("timeout occurred")</code> with a 500ms timeout and retry if found.</li>
+            <li><strong>Force-click:</strong> Cloudflare injects <code>&lt;ins&gt;</code> ad elements that intercept clicks. All navigation clicks use <code>force:true</code> to dispatch directly on the target element.</li>
+            <li><strong>Long timeouts:</strong> Navigation 180s, test body 300s, heavy tests (registration, checkout) 600s.</li>
+            <li><strong>1 retry (2 in CI):</strong> Transient site outages recover on the retry attempt.</li>
+            <li><strong>Try/catch in afterAll:</strong> Account cleanup failures don't propagate as test failures.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          What does the CI/CD pipeline do?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          The GitHub Actions workflow (<code>.github/workflows/playwright.yml</code>) runs on every push and pull request to main. It: (1) checks out the code and installs Node.js LTS; (2) runs <code>npm ci</code> for a clean, reproducible install; (3) installs Playwright browser binaries with OS dependencies; (4) runs all 11 tests except visual regression (which uses <code>--update-snapshots</code> on Linux to handle OS-specific rendering differences); (5) uploads the HTML report as a downloadable artifact (retained 30 days), a JUnit XML report for integration with test dashboards, and traces for any failures. The workflow also supports manual dispatch with a browser selection dropdown.
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q" onclick="toggleQA(this)">
+          What would you improve if you had more time?
+          <span class="arrow">▼</span>
+        </div>
+        <div class="qa-a">
+          Several improvements could make this more production-grade:
+          <ul>
+            <li><strong>Parallel workers:</strong> Currently workers=1 to avoid rate-limiting. A mock server or dedicated test environment would allow full parallelism and cut run time by 70%.</li>
+            <li><strong>API-based setup:</strong> Use automationexercise.com's REST API to create/delete test users instead of navigating through the UI in beforeAll, making auth tests faster and more reliable.</li>
+            <li><strong>Allure reporter:</strong> More visual test reports with trend history, screenshots, and step-by-step breakdowns.</li>
+            <li><strong>Negative test cases:</strong> TC01–TC03 only test the happy path. Add tests for invalid credentials, duplicate registration, empty cart checkout, etc.</li>
+            <li><strong>Environment config:</strong> Externalize the base URL and credentials as environment variables for multi-environment support (staging, production).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- end .content -->
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleQA(el) {
+  const ans = el.nextElementSibling;
+  el.classList.toggle('open');
+  ans.classList.toggle('open');
+}
+
+function copyCode(btn) {
+  const block = btn.parentElement;
+  const text = block.innerText.replace(/^Copy\n/, '').trim();
+  navigator.clipboard.writeText(text).catch(() => {
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(block);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 2000);
+}
+
+function toggleTheme() {
+  const root = document.documentElement;
+  const cur = root.getAttribute('data-theme');
+  root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+}
+</script>

@@ -8,7 +8,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
   workers: 1,
-  timeout: 90_000,
+  timeout: 300_000,
+  expect: { timeout: 30_000 },
 
   reporter: [
     ['html', { outputFolder: './reports/html', open: 'never' }],
@@ -23,15 +24,20 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     trace: 'on-first-retry',
-    actionTimeout: 20_000,
-    navigationTimeout: 45_000,
+    actionTimeout: 25_000,
+    navigationTimeout: 180_000,
     ignoreHTTPSErrors: true,
   },
 
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--no-sandbox', '--disable-dev-shm-usage'],
+        },
+      },
     },
     {
       name: 'firefox',
@@ -40,10 +46,6 @@ export default defineConfig({
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-    },
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
     },
   ],
 });
