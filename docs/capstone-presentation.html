@@ -1,0 +1,587 @@
+<title>QA Capstone Slides</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── Tokens ── */
+:root {
+  --bg:        #0a0f1e;
+  --surface:   #111827;
+  --surface2:  #1a2235;
+  --border:    #1f2d45;
+  --fg:        #e8edf5;
+  --muted:     #6b7fa3;
+  --accent:    #00d68f;
+  --accent2:   #0099ff;
+  --warn:      #f59e0b;
+  --pass:      #00d68f;
+  --mono:      'JetBrains Mono', monospace;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ── Shell ── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+
+/* ── Progress bar ── */
+.progress {
+  height: 3px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width .4s ease;
+}
+
+/* ── Slides viewport ── */
+.viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px max(48px, env(safe-area-inset-left, 0px));
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity .35s ease, transform .35s ease;
+  pointer-events: none;
+}
+.slide.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+.slide.out {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+/* ── Bottom bar ── */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px max(24px, env(safe-area-inset-left, 0px));
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+.counter { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.nav-btns { display: flex; gap: 10px; }
+.nav-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.nav-btn:hover { background: var(--border); border-color: var(--accent); }
+.nav-btn:disabled { opacity: .3; cursor: default; }
+.fs-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.fs-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Typography ── */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 800;
+  line-height: 1.1;
+  text-wrap: balance;
+  margin-bottom: 20px;
+}
+h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(24px, 3.5vw, 42px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+  margin-bottom: 24px;
+}
+.sub {
+  font-size: clamp(15px, 1.8vw, 18px);
+  color: var(--muted);
+  line-height: 1.65;
+  max-width: 640px;
+}
+
+/* ── Accent text ── */
+.hi { color: var(--accent); }
+.hi2 { color: var(--accent2); }
+
+/* ── Title slide ── */
+.slide-title { background: var(--bg); }
+.slide-title .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,214,143,.08);
+  border: 1px solid rgba(0,214,143,.2);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+.slide-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.slide-title .meta { margin-top: 32px; display: flex; gap: 24px; flex-wrap: wrap; }
+.meta-item { display: flex; flex-direction: column; gap: 4px; }
+.meta-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.meta-val { font-size: 15px; font-weight: 600; }
+
+/* ── Grid layouts ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.card-sm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.card-accent { border-color: rgba(0,214,143,.3); background: rgba(0,214,143,.04); }
+.card .label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.card .big { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--accent); }
+.card .desc { font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+/* ── TC table ── */
+.tc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.tc-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tc-id { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--accent); }
+.tc-name { font-size: 13px; font-weight: 600; }
+.tc-type { font-size: 11px; color: var(--muted); }
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: .04em;
+}
+.b-auth  { background: rgba(0,153,255,.12); color: #60b4ff; }
+.b-e2e   { background: rgba(245,158,11,.12); color: var(--warn); }
+.b-acc   { background: rgba(236,72,153,.12); color: #f472b6; }
+.b-vis   { background: rgba(168,85,247,.12); color: #c084fc; }
+.b-net   { background: rgba(20,184,166,.12); color: #34d399; }
+.b-func  { background: rgba(0,214,143,.12); color: var(--accent); }
+
+/* ── Arch layers ── */
+.arch { display: flex; flex-direction: column; gap: 10px; }
+.arch-layer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.arch-layer .layer-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--accent);
+  min-width: 140px;
+}
+.arch-layer .layer-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── Fix list ── */
+.fix-list { display: flex; flex-direction: column; gap: 12px; }
+.fix-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.fix-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: rgba(0,214,143,.1);
+  border: 1px solid rgba(0,214,143,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.fix-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.fix-desc  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── Result row ── */
+.result-row { display: flex; flex-direction: column; gap: 10px; }
+.result-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.result-browser { font-weight: 600; font-size: 15px; }
+.result-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.r-pass {
+  background: rgba(0,214,143,.1);
+  color: var(--accent);
+  border: 1px solid rgba(0,214,143,.2);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+}
+
+/* ── Closing ── */
+.closing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.closing-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.closing-card h4 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
+.closing-card ul { padding-left: 16px; }
+.closing-card li { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .slide { padding: 28px 20px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+  .arch-layer { flex-direction: column; gap: 4px; }
+  .arch-layer .layer-title { min-width: auto; }
+  .closing-grid { grid-template-columns: 1fr; }
+  .result-item { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 400px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="shell">
+  <div class="progress"><div class="progress-fill" id="prog"></div></div>
+
+  <div class="viewport" id="vp">
+
+    <!-- SLIDE 1: Title -->
+    <div class="slide slide-title active" data-i="0">
+      <div class="kicker"><span class="dot"></span>QA Capstone Project</div>
+      <h1>Playwright<br><span class="hi">Test Automation</span><br>Framework</h1>
+      <p class="sub">End-to-end QA automation for <strong style="color:var(--fg)">automationexercise.com</strong> — covering the full user journey across 3 browsers.</p>
+      <div class="meta">
+        <div class="meta-item"><span class="meta-label">Framework</span><span class="meta-val">Playwright v1.64.1</span></div>
+        <div class="meta-item"><span class="meta-label">Language</span><span class="meta-val">TypeScript</span></div>
+        <div class="meta-item"><span class="meta-label">Test Cases</span><span class="meta-val">11 Tests</span></div>
+        <div class="meta-item"><span class="meta-label">Browsers</span><span class="meta-val">Chromium · Firefox · WebKit</span></div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Overview stats -->
+    <div class="slide" data-i="1">
+      <div class="eyebrow">Project Overview</div>
+      <h2>What was <span class="hi">built</span></h2>
+      <div class="grid-4" style="margin-bottom:20px">
+        <div class="card card-accent"><div class="label">Test Cases</div><div class="big">11</div><div class="desc">Across 6 test types</div></div>
+        <div class="card card-accent"><div class="label">Browsers</div><div class="big">3</div><div class="desc">Chrome · Firefox · Safari</div></div>
+        <div class="card card-accent"><div class="label">Page Objects</div><div class="big">7</div><div class="desc">Full POM design pattern</div></div>
+        <div class="card card-accent"><div class="label">Pass Rate</div><div class="big hi">100%</div><div class="desc">All tests passing</div></div>
+      </div>
+      <p class="sub">A production-grade framework testing registration, login, cart, checkout, search, accessibility, visual regression, and API mocking on a live e-commerce site behind Cloudflare.</p>
+    </div>
+
+    <!-- SLIDE 3: Tech stack -->
+    <div class="slide" data-i="2">
+      <div class="eyebrow">Technology</div>
+      <h2>Tech <span class="hi">Stack</span></h2>
+      <div class="grid-3">
+        <div class="card"><div class="label">Test Framework</div><div style="font-size:18px;font-weight:700;margin-bottom:4px">Playwright</div><div class="desc">Browser automation, built-in waits, cross-browser</div></div>
+        <div class="card"><div class="label">Language</div><div style="font-size:18px;font-weight:700;margin-bottom:4px">TypeScript</div><div class="desc">Type-safe test authoring, compile-time checks</div></div>
+        <div class="card"><div class="label">Accessibility</div><div style="font-size:18px;font-weight:700;margin-bottom:4px">axe-core</div><div class="desc">WCAG 2.1 AA automated scanning</div></div>
+        <div class="card"><div class="label">Fake Data</div><div style="font-size:18px;font-weight:700;margin-bottom:4px">Faker.js</div><div class="desc">Unique emails and names per run</div></div>
+        <div class="card"><div class="label">CI / CD</div><div style="font-size:18px;font-weight:700;margin-bottom:4px">GitHub Actions</div><div class="desc">Auto-run on push, HTML + JUnit reports</div></div>
+        <div class="card"><div class="label">Reports</div><div style="font-size:18px;font-weight:700;margin-bottom:4px">HTML + JUnit</div><div class="desc">Visual report + CI-dashboard XML</div></div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Architecture -->
+    <div class="slide" data-i="3">
+      <div class="eyebrow">Design Pattern</div>
+      <h2>Framework <span class="hi">Architecture</span></h2>
+      <div class="arch">
+        <div class="arch-layer"><span class="layer-title">Test Specs</span><span class="layer-desc">11 <code style="font-family:var(--mono);font-size:12px;color:var(--accent2)">.spec.ts</code> files — call page object methods and assert results. No raw Playwright code.</span></div>
+        <div class="arch-layer"><span class="layer-title">Fixtures</span><span class="layer-desc"><code style="font-family:var(--mono);font-size:12px;color:var(--accent2)">fixtures/pageFixture.ts</code> — injects all page objects per test + blocks 7 ad networks globally.</span></div>
+        <div class="arch-layer"><span class="layer-title">Page Objects</span><span class="layer-desc">7 classes in <code style="font-family:var(--mono);font-size:12px;color:var(--accent2)">pages/</code> — each maps one website page. All extend BasePage for shared retry logic.</span></div>
+        <div class="arch-layer"><span class="layer-title">Utilities</span><span class="layer-desc"><code style="font-family:var(--mono);font-size:12px;color:var(--accent2)">utils/</code> — randomDataGenerator, authHelper, waitHelper, excelReader shared across tests.</span></div>
+        <div class="arch-layer"><span class="layer-title">Test Data</span><span class="layer-desc"><code style="font-family:var(--mono);font-size:12px;color:var(--accent2)">testdata/</code> — static JSON (payment card, addresses). Dynamic data generated fresh each run.</span></div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Test cases -->
+    <div class="slide" data-i="4">
+      <div class="eyebrow">Test Coverage</div>
+      <h2>11 <span class="hi">Test Cases</span></h2>
+      <div class="tc-grid">
+        <div class="tc-item"><span class="tc-id">TC01</span><span class="tc-name">User Registration</span><span class="badge b-auth">Auth</span></div>
+        <div class="tc-item"><span class="tc-id">TC02</span><span class="tc-name">Login Valid Credentials</span><span class="badge b-auth">Auth</span></div>
+        <div class="tc-item"><span class="tc-id">TC03</span><span class="tc-name">Logout Clears Session</span><span class="badge b-auth">Auth</span></div>
+        <div class="tc-item"><span class="tc-id">TC04</span><span class="tc-name">Product Search</span><span class="badge b-func">Functional</span></div>
+        <div class="tc-item"><span class="tc-id">TC05</span><span class="tc-name">Add Product to Cart</span><span class="badge b-func">Functional</span></div>
+        <div class="tc-item"><span class="tc-id">TC06</span><span class="tc-name">Remove from Cart</span><span class="badge b-func">Functional</span></div>
+        <div class="tc-item"><span class="tc-id">TC07</span><span class="tc-name">End-to-End Checkout</span><span class="badge b-e2e">E2E</span></div>
+        <div class="tc-item"><span class="tc-id">TC08</span><span class="tc-name">Contact Us Form</span><span class="badge b-func">Functional</span></div>
+        <div class="tc-item"><span class="tc-id">TC09</span><span class="tc-name">WCAG 2.1 Accessibility</span><span class="badge b-acc">A11y</span></div>
+        <div class="tc-item"><span class="tc-id">TC10</span><span class="tc-name">Visual Regression</span><span class="badge b-vis">Visual</span></div>
+        <div class="tc-item"><span class="tc-id">TC11</span><span class="tc-name">Network Mock / API</span><span class="badge b-net">Network</span></div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: Key challenges -->
+    <div class="slide" data-i="5">
+      <div class="eyebrow">Problem Solving</div>
+      <h2>Key <span class="hi">Challenges</span> Solved</h2>
+      <div class="fix-list">
+        <div class="fix-item">
+          <div class="fix-icon">⚡</div>
+          <div><div class="fix-title">Cloudflare 524 Timeouts</div><div class="fix-desc">Site returns 524 errors as valid HTML. Added detection for <code style="font-family:var(--mono);font-size:12px">"timeout occurred"</code> after every navigation with automatic page reload and retry.</div></div>
+        </div>
+        <div class="fix-item">
+          <div class="fix-icon">🛡</div>
+          <div><div class="fix-title">Ad Overlays Blocking Clicks</div><div class="fix-desc">Full-page iFOREX modals covered the checkout button. Blocked 7 ad networks via <code style="font-family:var(--mono);font-size:12px">page.route()</code> globally in fixtures + <code style="font-family:var(--mono);font-size:12px">dismissAdModal()</code> as fallback.</div></div>
+        </div>
+        <div class="fix-item">
+          <div class="fix-icon">📸</div>
+          <div><div class="fix-title">Visual Test Font Timeout (WebKit)</div><div class="fix-desc">WebKit's <code style="font-family:var(--mono);font-size:12px">document.fonts.ready</code> exceeded 5s. Fixed by blocking all font file requests so fonts resolve instantly, plus 60s snapshot timeout.</div></div>
+        </div>
+        <div class="fix-item">
+          <div class="fix-icon">🔍</div>
+          <div><div class="fix-title">Search Navigation Race Condition</div><div class="fix-desc"><code style="font-family:var(--mono);font-size:12px">waitForLoadState</code> resolved on the current page before navigation. Replaced with <code style="font-family:var(--mono);font-size:12px">clickAndWaitForNav</code> using URL-based detection.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: CI/CD -->
+    <div class="slide" data-i="6">
+      <div class="eyebrow">Automation</div>
+      <h2>CI / CD <span class="hi">Pipeline</span></h2>
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card"><div class="label">Trigger</div><div class="desc" style="color:var(--fg);font-size:14px;line-height:1.8">✓ Every push to <strong>main</strong><br>✓ Every pull request<br>✓ Manual run with browser dropdown</div></div>
+        <div class="card"><div class="label">Environment</div><div class="desc" style="color:var(--fg);font-size:14px;line-height:1.8">Ubuntu Latest (GitHub hosted)<br>Node.js LTS · npm ci<br>Chromium + OS dependencies</div></div>
+        <div class="card"><div class="label">Test Execution</div><div class="desc" style="color:var(--fg);font-size:14px;line-height:1.8">TC01–TC09, TC11 on Chromium<br>TC10 runs with <code style="font-family:var(--mono);font-size:12px">--update-snapshots</code><br>retries: 2 in CI</div></div>
+        <div class="card"><div class="label">Artifacts (uploaded)</div><div class="desc" style="color:var(--fg);font-size:14px;line-height:1.8">📊 HTML Report → 30 days<br>📋 JUnit XML → 30 days<br>🔍 Traces (on failure) → 7 days</div></div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: Results -->
+    <div class="slide" data-i="7">
+      <div class="eyebrow">Results</div>
+      <h2>All Tests <span class="hi">Passing</span></h2>
+      <div class="result-row">
+        <div class="result-item">
+          <span class="result-browser">Chromium</span>
+          <div class="result-badges">
+            <span class="r-pass">TC01 ✓</span><span class="r-pass">TC02 ✓</span><span class="r-pass">TC03 ✓</span><span class="r-pass">TC04 ✓</span><span class="r-pass">TC05 ✓</span><span class="r-pass">TC06 ✓</span><span class="r-pass">TC07 ✓</span><span class="r-pass">TC08 ✓</span><span class="r-pass">TC09 ✓</span><span class="r-pass">TC10 ✓</span><span class="r-pass">TC11 ✓</span>
+          </div>
+        </div>
+        <div class="result-item">
+          <span class="result-browser">Firefox</span>
+          <div class="result-badges">
+            <span class="r-pass">TC01 ✓</span><span class="r-pass">TC02 ✓</span><span class="r-pass">TC03 ✓</span><span class="r-pass">TC04 ✓</span><span class="r-pass">TC05 ✓</span><span class="r-pass">TC06 ✓</span><span class="r-pass">TC07 ✓</span><span class="r-pass">TC08 ✓</span><span class="r-pass">TC09 ✓</span><span class="r-pass">TC10 ✓</span><span class="r-pass">TC11 ✓</span>
+          </div>
+        </div>
+        <div class="result-item">
+          <span class="result-browser">WebKit (Safari)</span>
+          <div class="result-badges">
+            <span class="r-pass">TC01 ✓</span><span class="r-pass">TC02 ✓</span><span class="r-pass">TC03 ✓</span><span class="r-pass">TC04 ✓</span><span class="r-pass">TC05 ✓</span><span class="r-pass">TC06 ✓</span><span class="r-pass">TC07 ✓</span><span class="r-pass">TC08 ✓</span><span class="r-pass">TC09 ✓</span><span class="r-pass">TC10 ✓</span><span class="r-pass">TC11 ✓</span>
+          </div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:16px">33 total test executions across 3 browsers — <strong style="color:var(--accent)">33 / 33 passed</strong>.</p>
+    </div>
+
+    <!-- SLIDE 9: Learnings -->
+    <div class="slide" data-i="8">
+      <div class="eyebrow">Reflection</div>
+      <h2>What I <span class="hi">Learned</span></h2>
+      <div class="closing-grid">
+        <div class="closing-card">
+          <h4>Technical Skills</h4>
+          <ul>
+            <li>Playwright fixtures & POM design</li>
+            <li>TypeScript for type-safe tests</li>
+            <li>Visual regression with baselines</li>
+            <li>Accessibility testing with axe-core</li>
+            <li>API mocking with page.route()</li>
+          </ul>
+        </div>
+        <div class="closing-card">
+          <h4>Real-World QA</h4>
+          <ul>
+            <li>Handling flaky live-site tests</li>
+            <li>Ad overlay detection & mitigation</li>
+            <li>Cloudflare timeout recovery</li>
+            <li>CI/CD pipeline setup & reporting</li>
+            <li>Cross-browser compatibility testing</li>
+          </ul>
+        </div>
+        <div class="closing-card">
+          <h4>What I'd Improve</h4>
+          <ul>
+            <li>Parallel workers (needs mock server)</li>
+            <li>API-based test user setup</li>
+            <li>Negative test cases (invalid inputs)</li>
+            <li>Multi-environment config (staging/prod)</li>
+          </ul>
+        </div>
+        <div class="closing-card">
+          <h4>Key Takeaway</h4>
+          <ul>
+            <li>Testing a live site requires resilience</li>
+            <li>POM keeps tests maintainable at scale</li>
+            <li>Fixtures eliminate test setup boilerplate</li>
+            <li>CI catches regressions before they ship</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: Thank you -->
+    <div class="slide slide-title" data-i="9">
+      <div class="kicker"><span class="dot"></span>Thank You</div>
+      <h1>Questions<span class="hi">?</span></h1>
+      <p class="sub" style="max-width:520px">Built with <strong style="color:var(--fg)">Playwright + TypeScript</strong> for automationexercise.com — 11 tests, 3 browsers, 100% pass rate.</p>
+      <div class="meta" style="margin-top:28px">
+        <div class="meta-item"><span class="meta-label">Repository</span><span class="meta-val" style="font-family:var(--mono);font-size:13px">github.com/Murshid98/playwright-qa-capstone</span></div>
+        <div class="meta-item"><span class="meta-label">Run Command</span><span class="meta-val" style="font-family:var(--mono);font-size:13px;color:var(--accent)">npx playwright test --headed</span></div>
+      </div>
+    </div>
+
+  </div><!-- /viewport -->
+
+  <div class="bar">
+    <span class="counter" id="ctr">1 / 10</span>
+    <div class="nav-btns">
+      <button class="nav-btn" id="prev" disabled onclick="go(-1)">← Prev</button>
+      <button class="nav-btn" id="next" onclick="go(1)">Next →</button>
+    </div>
+    <button class="fs-btn" onclick="toggleFS()">⛶ Fullscreen</button>
+  </div>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const total  = slides.length;
+let cur = 0;
+
+function go(dir) {
+  const next = cur + dir;
+  if (next < 0 || next >= total) return;
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('out');
+  setTimeout(() => slides[cur - dir < 0 ? 0 : cur].classList.remove('out'), 400);
+  cur = next;
+  slides[cur].classList.add('active');
+  update();
+}
+
+function update() {
+  document.getElementById('ctr').textContent = `${cur + 1} / ${total}`;
+  document.getElementById('prev').disabled = cur === 0;
+  document.getElementById('next').disabled = cur === total - 1;
+  document.getElementById('prog').style.width = `${((cur + 1) / total) * 100}%`;
+  slides.forEach((s, i) => { if (i !== cur) s.classList.remove('active', 'out'); });
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+});
+
+document.getElementById('vp').addEventListener('click', e => {
+  if (!e.target.closest('button')) go(1);
+});
+
+function toggleFS() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+update();
+</script>
